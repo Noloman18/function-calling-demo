@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Map;
 
 public class AIEmployeeService {
+    private static final String FUNCTION_CALL_FILTER_ARRAY_BY_KEY = "filterArrayByKey";
+    private static final String FUNCTION_CALL_RANGE_FILTER = "rangeFilterArrayByKey";
     private final EmployeeService employeeService = new EmployeeService();
     private final OpenApiService openApiService = new OpenApiService();
 
@@ -18,7 +20,7 @@ public class AIEmployeeService {
     public AIEmployeeService() {
         OpenAPIDTO.FunctionDescription genericFilter =
                 OpenAPIDTO.FunctionDescription.builder()
-                .name("filterArrayByKey")
+                .name(FUNCTION_CALL_FILTER_ARRAY_BY_KEY)
                 .description("Filter map list by key")
                 .parameters(OpenAPIDTO.Parameters.builder()
                         .type("object")
@@ -38,8 +40,34 @@ public class AIEmployeeService {
                         .build())
                 .build();
 
+        OpenAPIDTO.FunctionDescription rangeFilter =
+                OpenAPIDTO.FunctionDescription.builder()
+                        .name(FUNCTION_CALL_RANGE_FILTER)
+                        .description("Filter map list by key in a particular range...")
+                        .parameters(OpenAPIDTO.Parameters.builder()
+                                .type("object")
+                                .properties(Map.of(
+                                        "key", OpenAPIDTO.Property.builder()
+                                                .type("string")
+                                                .description("The key to filter by")
+                                                .enumValues(List.of("age","salary"))
+                                                .build(),
+                                        "operation", OpenAPIDTO.Property.builder()
+                                                .type("string")
+                                                .description("The operation")
+                                                .enumValues(List.of("gte","lte","eq"))
+                                                .build(),
+                                        "value", OpenAPIDTO.Property.builder()
+                                                .type("number")
+                                                .description("The values to filter by")
+                                                .build()
+                                ))
+                                .required(List.of("key", "value"))
+                                .build())
+                        .build();
 
-        employeeServiceFunctions = List.of(genericFilter);
+
+        employeeServiceFunctions = List.of(genericFilter,rangeFilter);
     }
 
     public String queryEmployees(String query) throws Exception {
@@ -61,7 +89,7 @@ public class AIEmployeeService {
                 OpenAPIDTO.Message responseMessage = response.getChoices().get(0).getMessage();
                 responseMessage.setContent("");
                 messages.add(responseMessage);
-                if ("filterArrayByKey".equalsIgnoreCase(response.getFunctionName())) {
+                if (FUNCTION_CALL_FILTER_ARRAY_BY_KEY.equalsIgnoreCase(response.getFunctionName())) {
                     Map map = response.getFunctionArguments();
                     String key = (String) map.get("key");
                     List<String> value = (List<String>) map.get("value");
@@ -74,8 +102,39 @@ public class AIEmployeeService {
                     }
                     messages.add(OpenAPIDTO.Message.builder()
                             .role(OpenAPIDTO.Roles.function)
-                            .name("filterArrayByKey")
+                            .name(FUNCTION_CALL_FILTER_ARRAY_BY_KEY)
                                     .content("List filtered by " + key + " using value " + value)
+                            .build());
+                }
+                if (FUNCTION_CALL_RANGE_FILTER.equalsIgnoreCase(response.getFunctionName())) {
+                    Map map = response.getFunctionArguments();
+                    String key = (String) map.get("key");
+                    String operation = (String) map.get("operation");
+                    double value = Double.parseDouble(String.valueOf(map.get("value")));
+                    if ("age".equalsIgnoreCase(key)) {
+                        if ("gte".equalsIgnoreCase(operation)) {
+                            filteredList = employeeService.filterByAgeGTE((int) value, filteredList);
+                        } else if ("lte".equalsIgnoreCase(operation)) {
+                            filteredList = employeeService.filterByAgeLTE((int) value, filteredList);
+                        }
+                        else if ("eq".equalsIgnoreCase(operation)) {
+                            filteredList = employeeService.filterByAgeEQ((int) value, filteredList);
+                        }
+                    } else if ("salary".equalsIgnoreCase(key)) {
+                        if ("gte".equalsIgnoreCase(operation)) {
+                            filteredList = employeeService.filterBySalaryGTE(value, filteredList);
+                        } else if ("lte".equalsIgnoreCase(operation)) {
+                            filteredList = employeeService.filterBySalaryLTE(value, filteredList);
+                        }
+                        else if ("eq".equalsIgnoreCase(operation)) {
+                            filteredList = employeeService.filterBySalaryEQ(value, filteredList);
+                        }
+                    }
+
+                    messages.add(OpenAPIDTO.Message.builder()
+                            .role(OpenAPIDTO.Roles.function)
+                            .name(FUNCTION_CALL_RANGE_FILTER)
+                            .content("List filtered by " + key + " using value " + value)
                             .build());
                 }
             }

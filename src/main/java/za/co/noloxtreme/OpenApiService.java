@@ -9,6 +9,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.List;
+import java.util.Optional;
 
 public class OpenApiService {
     private final Gson gson;
@@ -23,6 +24,11 @@ public class OpenApiService {
 
     public OpenAPIDTO.OpenAPIResponse makeFunctionCall(List<OpenAPIDTO.Message> messages, List<OpenAPIDTO.FunctionDescription> functions) throws Exception {
 
+        boolean shouldDebug =
+                Optional.ofNullable(System.getenv("SHOULD_DEBUG"))
+                        .map(Boolean::parseBoolean)
+                        .orElse(false);
+
         OpenAPIDTO.OpenAPIRequest request = OpenAPIDTO.OpenAPIRequest.builder()
                 .model("gpt-3.5-turbo-0613")
                 .functionCall("auto")
@@ -33,8 +39,12 @@ public class OpenApiService {
 
         var httpClient = HttpClient.newHttpClient();
         String stringBody = gson.toJson(request);
-        System.out.println("Request");
-        System.out.println(stringBody);
+
+        if (shouldDebug) {
+            System.out.println("Request");
+            System.out.println(stringBody);
+        }
+
         var httpRequest = HttpRequest.newBuilder()
                 .uri(new URI("https://api.openai.com/v1/chat/completions"))
                 .header("Content-Type", "application/json")
@@ -43,8 +53,12 @@ public class OpenApiService {
                 .build();
         HttpResponse<String> response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
         String responseString = response.body();
-        System.out.println("Response");
-        System.out.println(responseString);
+
+        if (shouldDebug) {
+            System.out.println("Response");
+            System.out.println(responseString);
+        }
+
         return gson.fromJson(responseString, OpenAPIDTO.OpenAPIResponse.class);
     }
 }

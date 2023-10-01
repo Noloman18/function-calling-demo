@@ -51,6 +51,24 @@ public class EmployeeService {
                 .collect(Collectors.toList());
     }
 
+    public List<Map<String,Object>> filterBySalaryGTE(double salary,List<Map<String,Object>> list) {
+        return list.stream()
+                .filter(employee -> (int)employee.get("salary") >= salary)
+                .collect(Collectors.toList());
+    }
+
+    public List<Map<String,Object>> filterBySalaryLTE(double salary,List<Map<String,Object>> list) {
+        return list.stream()
+                .filter(employee -> (int)employee.get("salary") <= salary)
+                .collect(Collectors.toList());
+    }
+
+    public List<Map<String,Object>> filterBySalaryEQ(double salary,List<Map<String,Object>> list) {
+        return list.stream()
+                .filter(employee -> (int)employee.get("salary") == salary)
+                .collect(Collectors.toList());
+    }
+
     public List<Map<String, Object>> aggregateByKeys(List<String> keys, List<String> properties, List<String> aggregateOperation,List<Map<String,Object>> list) {
         return list.stream()
                 .collect(Collectors.groupingBy(employee -> {
