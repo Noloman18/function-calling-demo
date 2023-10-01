@@ -26,12 +26,13 @@ public class AIEmployeeService {
                                 "key", OpenAPIDTO.Property.builder()
                                         .type("string")
                                         .description("The key to filter by")
-                                        .enumValues(List.of("department","country","age"))
+                                        .enumValues(List.of("department","country"))
                                         .build(),
-                                "value", OpenAPIDTO.Property.builder().type("string")
-                                            .description("The value to filter by")
+                                "value", OpenAPIDTO.Property.builder()
+                                        .type("array").items(OpenAPIDTO.ArrayType.builder().type("string")
+                                                .build())
+                                            .description("The values to filter by")
                                         .build()
-
                         ))
                         .required(List.of("key", "value"))
                         .build())
@@ -63,13 +64,13 @@ public class AIEmployeeService {
                 if ("filterArrayByKey".equalsIgnoreCase(response.getFunctionName())) {
                     Map map = response.getFunctionArguments();
                     String key = (String) map.get("key");
-                    String value = (String) map.get("value");
+                    List<String> value = (List<String>) map.get("value");
                     if ("department".equalsIgnoreCase(key)) {
-                        filteredList = employeeService.filterByDepartment(value, filteredList);
+                        filteredList = employeeService.filterByDepartment(filteredList,value.toArray(new String[0]));
                     } else if ("country".equalsIgnoreCase(key)) {
-                        filteredList = employeeService.filterByCountry(value, filteredList);
+                        filteredList = employeeService.filterByCountry(filteredList,value.toArray(new String[0]));
                     } else if ("age".equalsIgnoreCase(key)) {
-                        filteredList = employeeService.filterByAgeEQ(Integer.parseInt(value), filteredList);
+                        filteredList = employeeService.filterByAgeEQ(Integer.parseInt(value.get(0)), filteredList);
                     }
                     messages.add(OpenAPIDTO.Message.builder()
                             .role(OpenAPIDTO.Roles.function)

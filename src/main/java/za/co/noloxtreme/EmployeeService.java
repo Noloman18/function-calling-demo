@@ -13,15 +13,24 @@ public class EmployeeService {
         return dataSource.getEmployeeDatabase();
     }
 
-    public List<Map<String,Object>> filterByDepartment(String department, List<Map<String,Object>> list) {
+    private boolean containsValue(String mapKey, Map<String,Object> map, String... value) {
+        for (String val : value) {
+            if (val.equalsIgnoreCase((String) map.get(mapKey))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public List<Map<String,Object>> filterByDepartment(List<Map<String,Object>> list,String... departments) {
         return list.stream()
-                .filter(employee -> department.equalsIgnoreCase((String) employee.get("department")))
+                .filter(employee -> containsValue("department", employee, departments))
                 .collect(Collectors.toList());
     }
 
-    public List<Map<String,Object>> filterByCountry(String country,List<Map<String,Object>> list) {
+    public List<Map<String,Object>> filterByCountry(List<Map<String,Object>> list,String... countries) {
         return list.stream()
-                .filter(employee -> country.equalsIgnoreCase((String) employee.get("country")))
+                .filter(employee -> containsValue("country", employee, countries))
                 .collect(Collectors.toList());
     }
 

@@ -87,6 +87,13 @@ public class OpenAPIDTO {
         private String description;
         @SerializedName("enum")
         private List<String> enumValues;
+        private ArrayType items;
+    }
+
+    @Data
+    @Builder
+    public static class ArrayType {
+        private String type;
     }
 
     @Data
