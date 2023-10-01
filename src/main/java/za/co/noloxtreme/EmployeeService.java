@@ -83,6 +83,8 @@ public class EmployeeService {
                     Map<String,Object> aggregates = new LinkedHashMap<>();
                     List<Map<String, Object>> groupedList = entry.getValue();
 
+                    aggregates.put("group", entry.getKey());
+
                     for (int i = 0; i < properties.size(); i++) {
                         String property = properties.get(i);
                         String operation = aggregateOperation.get(i);

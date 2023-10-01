@@ -94,6 +94,8 @@ public class OpenAPIDTO {
     @Builder
     public static class ArrayType {
         private String type;
+        @SerializedName("enum")
+        private List<String> enumValues;
     }
 
     @Data

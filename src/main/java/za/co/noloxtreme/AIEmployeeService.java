@@ -10,6 +10,8 @@ import java.util.Map;
 public class AIEmployeeService {
     private static final String FUNCTION_CALL_FILTER_ARRAY_BY_KEY = "filterArrayByKey";
     private static final String FUNCTION_CALL_RANGE_FILTER = "rangeFilterArrayByKey";
+
+    private static final String FUNCTION_CALL_REDUCER = "reduceFields";
     private final EmployeeService employeeService = new EmployeeService();
     private final OpenApiService openApiService = new OpenApiService();
 
@@ -62,12 +64,46 @@ public class AIEmployeeService {
                                                 .description("The values to filter by")
                                                 .build()
                                 ))
-                                .required(List.of("key", "value"))
+                                .required(List.of("key", "operation","value"))
+                                .build())
+                        .build();
+
+        OpenAPIDTO.FunctionDescription reducerFunctions =
+                OpenAPIDTO.FunctionDescription.builder()
+                        .name(FUNCTION_CALL_REDUCER)
+                        .description("Perform a reduction operation on specified fields")
+                        .parameters(OpenAPIDTO.Parameters.builder()
+                                .type("object")
+                                .properties(Map.of(
+                                        "groupByKeys", OpenAPIDTO.Property.builder()
+                                                .type("array")
+                                                .description("List of fields to group by")
+                                                .items(OpenAPIDTO.ArrayType.builder()
+                                                        .type("string")
+                                                        .build())
+                                                .build(),
+                                        "reductionKeys", OpenAPIDTO.Property.builder()
+                                                .type("array")
+                                                .description("List of fields to reduce, this will correspond to the operations")
+                                                .items(OpenAPIDTO.ArrayType.builder()
+                                                        .type("string")
+                                                        .build())
+                                                .build(),
+                                        "operations", OpenAPIDTO.Property.builder()
+                                                .type("array")
+                                                .description("List of aggregation operations, this will correspond to the reduction keys")
+                                                .items(OpenAPIDTO.ArrayType.builder()
+                                                        .type("string")
+                                                        .enumValues(List.of("sum","count","avg","min","max"))
+                                                        .build())
+                                                .build()
+                                ))
+                                .required(List.of("groupByKeys", "reductionKeys","operations"))
                                 .build())
                         .build();
 
 
-        employeeServiceFunctions = List.of(genericFilter,rangeFilter);
+        employeeServiceFunctions = List.of(genericFilter,rangeFilter, reducerFunctions);
     }
 
     public String queryEmployees(String query) throws Exception {
@@ -148,6 +184,20 @@ public class AIEmployeeService {
                             .role(OpenAPIDTO.Roles.function)
                             .name(FUNCTION_CALL_RANGE_FILTER)
                             .content("List filtered by " + key + " using value " + value)
+                            .build());
+                }
+                if (FUNCTION_CALL_REDUCER.equalsIgnoreCase(response.getFunctionName())) {
+                    Map map = response.getFunctionArguments();
+                    List<String> groupByKeys = (List<String>) map.get("groupByKeys");
+                    List<String> reductionKeys = (List<String>) map.get("reductionKeys");
+                    List<String> operations = (List<String>) map.get("operations");
+
+                    filteredList = employeeService.aggregateByKeys(groupByKeys, reductionKeys, operations, filteredList);
+
+                    messages.add(OpenAPIDTO.Message.builder()
+                            .role(OpenAPIDTO.Roles.function)
+                            .name(FUNCTION_CALL_REDUCER)
+                            .content("List aggregated by " + groupByKeys + " using value " + reductionKeys+" And performing the operations "+operations)
                             .build());
                 }
             }
