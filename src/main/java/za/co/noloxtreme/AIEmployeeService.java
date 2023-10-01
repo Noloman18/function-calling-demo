@@ -54,7 +54,7 @@ public class AIEmployeeService {
                                                 .build(),
                                         "operation", OpenAPIDTO.Property.builder()
                                                 .type("string")
-                                                .description("The operation")
+                                                .description("The operation, the value")
                                                 .enumValues(List.of("gte","lte","eq"))
                                                 .build(),
                                         "value", OpenAPIDTO.Property.builder()
@@ -114,8 +114,14 @@ public class AIEmployeeService {
                     if ("age".equalsIgnoreCase(key)) {
                         if ("gte".equalsIgnoreCase(operation)) {
                             filteredList = employeeService.filterByAgeGTE((int) value, filteredList);
+                        }
+                        if ("gt".equalsIgnoreCase(operation)) {
+                            filteredList = employeeService.filterByAgeGTE((int) value +1, filteredList);
                         } else if ("lte".equalsIgnoreCase(operation)) {
                             filteredList = employeeService.filterByAgeLTE((int) value, filteredList);
+                        }
+                        else if ("lt".equalsIgnoreCase(operation)) {
+                            filteredList = employeeService.filterByAgeLTE((int) value -1, filteredList);
                         }
                         else if ("eq".equalsIgnoreCase(operation)) {
                             filteredList = employeeService.filterByAgeEQ((int) value, filteredList);
@@ -123,8 +129,15 @@ public class AIEmployeeService {
                     } else if ("salary".equalsIgnoreCase(key)) {
                         if ("gte".equalsIgnoreCase(operation)) {
                             filteredList = employeeService.filterBySalaryGTE(value, filteredList);
-                        } else if ("lte".equalsIgnoreCase(operation)) {
+                        }
+                        if ("gt".equalsIgnoreCase(operation)) {
+                            filteredList = employeeService.filterBySalaryGTE(value +0.1, filteredList);
+                        }
+                        else if ("lte".equalsIgnoreCase(operation)) {
                             filteredList = employeeService.filterBySalaryLTE(value, filteredList);
+                        }
+                        else if ("lt".equalsIgnoreCase(operation)) {
+                            filteredList = employeeService.filterBySalaryLTE(value-0.1, filteredList);
                         }
                         else if ("eq".equalsIgnoreCase(operation)) {
                             filteredList = employeeService.filterBySalaryEQ(value, filteredList);
