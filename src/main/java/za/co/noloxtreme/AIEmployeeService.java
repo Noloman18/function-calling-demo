@@ -55,7 +55,7 @@ public class AIEmployeeService {
                                         "operation", OpenAPIDTO.Property.builder()
                                                 .type("string")
                                                 .description("The operation, the value")
-                                                .enumValues(List.of("gte","lte","eq"))
+                                                .enumValues(List.of("gte","lte","eq","lt","gt"))
                                                 .build(),
                                         "value", OpenAPIDTO.Property.builder()
                                                 .type("number")
