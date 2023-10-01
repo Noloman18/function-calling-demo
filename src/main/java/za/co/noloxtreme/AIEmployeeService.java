@@ -44,7 +44,7 @@ public class AIEmployeeService {
     public String queryEmployees(String query) throws Exception {
         List<Map<String, Object>> filteredList = employeeService.getAllEmployees();
 
-        int maxIterations = 4;
+        int maxIterations = 15;
         String result = null;
 
         List< OpenAPIDTO.Message> messages = new ArrayList<>();
@@ -74,13 +74,24 @@ public class AIEmployeeService {
                     messages.add(OpenAPIDTO.Message.builder()
                             .role(OpenAPIDTO.Roles.function)
                             .name("filterArrayByKey")
-                                    .content(gson.toJson(filteredList))
+                                    .content("List filtered by " + key + " using value " + value)
                             .build());
-
                 }
             }
             if (response.shouldStopFunctionCalls()) {
-                result = response.getChoices().get(0).getMessage().getContent();
+                if (filteredList.isEmpty()) {
+                    result = "No results found";
+                } else {
+                    StringBuilder sb = new StringBuilder();
+                    for (int i = 0; i < filteredList.size(); i++) {
+                        Map<String, Object> employee = filteredList.get(i);
+                        sb.append(i + 1).append(". ")
+                                .append(employee.toString())
+                                .append("\n");
+                    }
+                    result = sb.toString();
+                }
+
                 break;
             }
         }

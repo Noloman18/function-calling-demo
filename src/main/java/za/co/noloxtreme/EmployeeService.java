@@ -15,13 +15,13 @@ public class EmployeeService {
 
     public List<Map<String,Object>> filterByDepartment(String department, List<Map<String,Object>> list) {
         return list.stream()
-                .filter(employee -> employee.get("department").equals(department))
+                .filter(employee -> department.equalsIgnoreCase((String) employee.get("department")))
                 .collect(Collectors.toList());
     }
 
     public List<Map<String,Object>> filterByCountry(String country,List<Map<String,Object>> list) {
         return list.stream()
-                .filter(employee -> employee.get("country").equals(country))
+                .filter(employee -> country.equalsIgnoreCase((String) employee.get("country")))
                 .collect(Collectors.toList());
     }
 
