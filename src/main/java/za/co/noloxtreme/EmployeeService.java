@@ -20,30 +20,30 @@ public class EmployeeService {
     }
 
     public List<Map<String,Object>> filterByCountry(String country,List<Map<String,Object>> list) {
-        return dataSource.getEmployeeDatabase().stream()
+        return list.stream()
                 .filter(employee -> employee.get("country").equals(country))
                 .collect(Collectors.toList());
     }
 
     public List<Map<String,Object>> filterByAgeGTE(int age,List<Map<String,Object>> list) {
-        return dataSource.getEmployeeDatabase().stream()
+        return list.stream()
                 .filter(employee -> (int)employee.get("age") >= age)
                 .collect(Collectors.toList());
     }
 
     public List<Map<String,Object>> filterByAgeLTE(int age,List<Map<String,Object>> list) {
-        return dataSource.getEmployeeDatabase().stream()
+        return list.stream()
                 .filter(employee -> (int)employee.get("age") <= age)
                 .collect(Collectors.toList());
     }
     public List<Map<String,Object>> filterByAgeEQ(int age,List<Map<String,Object>> list) {
-        return dataSource.getEmployeeDatabase().stream()
+        return list.stream()
                 .filter(employee -> (int)employee.get("age") == age)
                 .collect(Collectors.toList());
     }
 
     public List<Map<String, Object>> aggregateByKeys(List<String> keys, List<String> properties, List<String> aggregateOperation,List<Map<String,Object>> list) {
-        return dataSource.getEmployeeDatabase().stream()
+        return list.stream()
                 .collect(Collectors.groupingBy(employee -> {
                     StringBuilder sb = new StringBuilder();
                     for (String key : keys) {

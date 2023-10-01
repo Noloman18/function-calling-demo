@@ -2,7 +2,7 @@ package za.co.noloxtreme;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import za.co.noloxtreme.dto.OpenAIRequest;
+import za.co.noloxtreme.dto.OpenAPIDTO;
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -22,12 +22,11 @@ public class OpenApiService {
 
 
 
-    public Map makeFunctionCall(List<OpenAIRequest.Message> messages,List<OpenAIRequest.FunctionDescription> functions) throws Exception {
+    public OpenAPIDTO.OpenAPIResponse makeFunctionCall(List<OpenAPIDTO.Message> messages, List<OpenAPIDTO.FunctionDescription> functions) throws Exception {
 
-        OpenAIRequest request = OpenAIRequest.builder()
+        OpenAPIDTO.OpenAPIRequest request = OpenAPIDTO.OpenAPIRequest.builder()
                 .model("gpt-3.5-turbo-0613")
                 .functionCall("auto")
-                .temperature(0.2f)
                 .maxTokens(1024)
                 .messages(messages)
                 .functions(functions)
@@ -35,6 +34,7 @@ public class OpenApiService {
 
         var httpClient = HttpClient.newHttpClient();
         String stringBody = gson.toJson(request);
+        System.out.println("Request");
         System.out.println(stringBody);
         var httpRequest = HttpRequest.newBuilder()
                 .uri(new URI("https://api.openai.com/v1/chat/completions"))
@@ -43,6 +43,9 @@ public class OpenApiService {
                 .POST(HttpRequest.BodyPublishers.ofString(stringBody))
                 .build();
         HttpResponse<String> response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
-        return gson.fromJson(response.body(), Map.class);
+        String responseString = response.body();
+        System.out.println("Response");
+        System.out.println(responseString);
+        return gson.fromJson(responseString, OpenAPIDTO.OpenAPIResponse.class);
     }
 }

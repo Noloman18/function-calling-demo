@@ -1,6 +1,7 @@
 package za.co.noloxtreme;
 
-import za.co.noloxtreme.dto.OpenAIRequest;
+import com.google.gson.Gson;
+import za.co.noloxtreme.dto.OpenAPIDTO;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,26 +11,25 @@ public class AIEmployeeService {
     private final EmployeeService employeeService = new EmployeeService();
     private final OpenApiService openApiService = new OpenApiService();
 
-    private final List<OpenAIRequest.FunctionDescription> employeeServiceFunctions;
+    private final List<OpenAPIDTO.FunctionDescription> employeeServiceFunctions;
+
+    private final Gson gson = new Gson();
 
     public AIEmployeeService() {
-        OpenAIRequest.FunctionDescription genericFilter =
-                OpenAIRequest.FunctionDescription.builder()
+        OpenAPIDTO.FunctionDescription genericFilter =
+                OpenAPIDTO.FunctionDescription.builder()
                 .name("filterArrayByKey")
                 .description("Filter map list by key")
-                .parameters(OpenAIRequest.Parameters.builder()
+                .parameters(OpenAPIDTO.Parameters.builder()
                         .type("object")
                         .properties(Map.of(
-                                "key", OpenAIRequest.Property.builder()
+                                "key", OpenAPIDTO.Property.builder()
                                         .type("string")
                                         .description("The key to filter by")
                                         .enumValues(List.of("department","country","age"))
                                         .build(),
-                                "value", OpenAIRequest.Property.builder().type("string")
+                                "value", OpenAPIDTO.Property.builder().type("string")
                                             .description("The value to filter by")
-                                        .build(),
-                                "list", OpenAIRequest.Property.builder()
-                                        .description("The current state of the list to filter")
                                         .build()
 
                         ))
@@ -42,19 +42,47 @@ public class AIEmployeeService {
     }
 
     public String queryEmployees(String query) throws Exception {
-        int maxIterations = 10;
+        List<Map<String, Object>> filteredList = employeeService.getAllEmployees();
+
+        int maxIterations = 4;
         String result = null;
 
-        List< OpenAIRequest.Message> messages = new ArrayList<>();
-        messages.add(OpenAIRequest.Message.builder()
-                        .role(OpenAIRequest.Roles.user)
+        List< OpenAPIDTO.Message> messages = new ArrayList<>();
+        messages.add(OpenAPIDTO.Message.builder()
+                        .role(OpenAPIDTO.Roles.user)
                         .content(query)
                         .build());
 
         while (maxIterations-- > 0) {
-            Map map = openApiService.makeFunctionCall(messages, employeeServiceFunctions);
-            System.out.println(map);
-            break;
+            OpenAPIDTO.OpenAPIResponse response = openApiService.makeFunctionCall(messages, employeeServiceFunctions);
+
+            if (response.shouldMakeFunctionCall()) {
+                OpenAPIDTO.Message responseMessage = response.getChoices().get(0).getMessage();
+                responseMessage.setContent("");
+                messages.add(responseMessage);
+                if ("filterArrayByKey".equalsIgnoreCase(response.getFunctionName())) {
+                    Map map = response.getFunctionArguments();
+                    String key = (String) map.get("key");
+                    String value = (String) map.get("value");
+                    if ("department".equalsIgnoreCase(key)) {
+                        filteredList = employeeService.filterByDepartment(value, filteredList);
+                    } else if ("country".equalsIgnoreCase(key)) {
+                        filteredList = employeeService.filterByCountry(value, filteredList);
+                    } else if ("age".equalsIgnoreCase(key)) {
+                        filteredList = employeeService.filterByAgeEQ(Integer.parseInt(value), filteredList);
+                    }
+                    messages.add(OpenAPIDTO.Message.builder()
+                            .role(OpenAPIDTO.Roles.function)
+                            .name("filterArrayByKey")
+                                    .content(gson.toJson(filteredList))
+                            .build());
+
+                }
+            }
+            if (response.shouldStopFunctionCalls()) {
+                result = response.getChoices().get(0).getMessage().getContent();
+                break;
+            }
         }
 
         return result;
